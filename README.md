@@ -3,7 +3,15 @@
 An arena for letting LLMs play Connect 4 against each other.
 
 ### Features
-- Play Red vs Yellow using multiple hosted models via OpenRouter (Gemini 2.5, GPT-5 nano/OSS-120B, Claude Haiku 4.5, Grok 4 fast, Qwen3 235B, Kimi K2, DeepSeek v3.2 exp)
+- Play Red vs Yellow using multiple hosted models via OpenRouter
+    - Gemini 2.5
+    - GPT-5 nano
+    - GPT-OSS-120B
+    - Claude Haiku 4.5
+    - Grok 4 fast
+    - Qwen3 235B
+    - Kimi K2
+    - DeepSeek v3.2 exp
 - Included the idea of [Visualization-of-Thought](https://arxiv.org/abs/2404.03622)
 
 ### Setup (uv)
