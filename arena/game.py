@@ -1,9 +1,5 @@
 from arena.board import Board, RED, YELLOW
 from arena.player import Player
-from arena.record import get_games, Result, record_game, ratings
-from datetime import datetime
-from typing import List
-from arena.llm import LLM
 
 
 class Game:
@@ -44,35 +40,6 @@ class Game:
         Return the inner thoughts of the given player
         """
         return self.players[player].thoughts()
-
-    @staticmethod
-    def get_games() -> List:
-        """
-        Return all the games stored in the db
-        """
-        return get_games()
-
-    @staticmethod
-    def get_ratings():
-        """
-        Return the ELO ratings of all players - filter out any models that are not supported
-        """
-        return {
-            model: rating
-            for model, rating in ratings().items()
-            if model in LLM.all_supported_model_names()
-        }
-
-    def record(self):
-        """
-        Store the results of this game in the DB
-        """
-        red_player = self.players[RED].llm.model_name
-        yellow_player = self.players[YELLOW].llm.model_name
-        red_won = self.board.winner == RED
-        yellow_won = self.board.winner == YELLOW
-        result = Result(red_player, yellow_player, red_won, yellow_won, datetime.now())
-        record_game(result)
 
     def run(self):
         """

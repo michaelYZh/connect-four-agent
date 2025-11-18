@@ -1,20 +1,15 @@
 [project]
 name = "connect-four-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Connect four arena for LLM agents"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "anthropic>=0.73.0",
     "black>=25.11.0",
-    "google-generativeai>=0.8.5",
     "gradio>=5.49.1",
-    "groq>=0.34.1",
     "ipywidgets>=8.1.8",
     "jupyterlab>=4.4.10",
     "openai>=2.8.0",
-    "pandas>=2.3.3",
-    "pymongo>=4.15.4",
     "python-dotenv>=1.2.1",
     "urllib3>=2.5.0",
 ]

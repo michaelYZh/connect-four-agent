@@ -22,6 +22,7 @@ class Player:
         self.threats = ""
         self.opportunities = ""
         self.strategy = ""
+        self.pictured_board_after_move = []
 
     def system(self, board, legal_moves: str, illegal_moves: str) -> str:
         """
@@ -32,6 +33,7 @@ Players take turns to drop counters into one of 7 columns A, B, C, D, E, F, G.
 The winner is the first player to get 4 counters in a row in any direction.
 You are {pieces[self.color]} and your opponent is {pieces[self.color * -1]}.
 You must pick a column for your move. You must pick one of the following legal moves: {legal_moves}.
+Visualize the state after each reasoning step.
 You should respond in JSON according to this spec:
 
 {{
@@ -39,7 +41,15 @@ You should respond in JSON according to this spec:
     "threats": "any threats from my opponent that I should block",
     "opportunities": "my best chances to win",
     "strategy": "my thought process",
-    "move_column": "one letter from this list of legal moves: {legal_moves}"
+    "move_column": "one letter from this list of legal moves: {legal_moves}",
+    "pictured_board_after_move": [
+        "row 6 top using R for red, Y for yellow, _ for empty",
+        "row 5",
+        "row 4",
+        "row 3",
+        "row 2",
+        "row 1 bottom"
+    ]
 }}
 
 You must pick one of these letters for your move_column: {legal_moves}{illegal_moves}"""
@@ -57,6 +67,7 @@ Here's another way of looking at the board visually, where R represents a red co
 
 {board.alternative()}
 
+Visualize the state after each reasoning step.
 Your final response should be only in JSON strictly according to this spec:
 
 {{
@@ -64,7 +75,15 @@ Your final response should be only in JSON strictly according to this spec:
     "threats": "any threats from my opponent that I should block",
     "opportunities": "my best chances to win",
     "strategy": "my thought process",
-    "move_column": "one of {legal_moves} which are the legal moves"
+    "move_column": "one of {legal_moves} which are the legal moves",
+    "pictured_board_after_move": [
+        "row 6 top using R for red, Y for yellow, _ for empty",
+        "row 5",
+        "row 4",
+        "row 3",
+        "row 2",
+        "row 1 bottom"
+    ]
 }}
 
 For example, the following could be a response:
@@ -72,9 +91,17 @@ For example, the following could be a response:
 {{
     "evaluation": "the board is equally balanced but I have a slight advantage",
     "threats": "my opponent has a threat but I can block it",
-    "opportunities": "I've developed several promising 3 in a row opportunities",
+    "opportunities": "I've developed several promising 2 in a col opportunities",
     "strategy": "I must first block my opponent, then I can continue to develop",
-    "move_column": "{random.choice(board.legal_moves())}"
+    "move_column": "{random.choice(board.legal_moves())}",
+    "pictured_board_after_move": [
+        "_______",
+        "_______",
+        "___R___",
+        "YR_Y___",
+        "YRRY___",
+        "RYRY___"
+    ]
 }}
 
 And this is another example of a well formed response:
@@ -84,7 +111,15 @@ And this is another example of a well formed response:
     "threats": "my opponent has several threats",
     "opportunities": "I can immediately win the game by making a diagonal 4",
     "strategy": "I will take the winning move",
-    "move_column": "{random.choice(board.legal_moves())}"
+    "move_column": "{random.choice(board.legal_moves())}",
+    "pictured_board_after_move": [
+        "_______",
+        "_______",
+        "___R___",
+        "Y_RY___",
+        "YRRY___",
+        "RRRYY__"
+    ]
 }}
 
 
@@ -110,6 +145,13 @@ You must pick one of these letters for your move_column: {legal_moves}{illegal_m
             self.threats = result.get("threats") or ""
             self.opportunities = result.get("opportunities") or ""
             self.strategy = result.get("strategy") or ""
+            board_picture = result.get("pictured_board_after_move") or []
+            # Normalize to list of strings
+            if isinstance(board_picture, str):
+                board_picture = [line for line in board_picture.splitlines() if line]
+            elif not isinstance(board_picture, list):
+                board_picture = []
+            self.pictured_board_after_move = board_picture
         except Exception as e:
             logging.error(f"Exception {e}")
             logging.exception(e)
@@ -142,6 +184,8 @@ You must pick one of these letters for your move_column: {legal_moves}{illegal_m
         result += f"<b>Threats:</b><br/>{self.threats}<br/><br/>"
         result += f"<b>Opportunities:</b><br/>{self.opportunities}<br/><br/>"
         result += f"<b>Strategy:</b><br/>{self.strategy}"
+        board_lines = "<br/>".join(self.pictured_board_after_move)
+        result += f"<br/><br/><b>Pictured board after move:</b><br/>{board_lines}"
         result += "</div>"
         return result
 

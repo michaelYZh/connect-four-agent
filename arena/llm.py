@@ -1,7 +1,5 @@
 from abc import ABC
-from anthropic import Anthropic
 from openai import OpenAI
-from groq import Groq
 import logging
 from typing import Dict, Type, Self, List
 import os
@@ -149,257 +147,25 @@ class LLM(ABC):
         return subclass(model_name, temperature)
 
 
-class Claude(LLM):
+class OpenRouterLLM(LLM):
     """
-    A class to act as an interface to the remote AI, in this case Claude
-    """
-
-    model_names = [
-        "claude-opus-4-1-20250805",
-        "claude-sonnet-4-5",
-        "claude-haiku-4-5",
-    ]
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the Anthropic client
-        """
-        super().__init__(model_name, temperature)
-        self.client = Anthropic()
-
-    def _send(self, system: str, user: str, max_tokens: int = 3000) -> str:
-        """
-        Send a message to Claude
-        :param system: the context in which this message is to be taken
-        :param user: the prompt
-        :param max_tokens: max number of tokens to generate
-        :return: the response from the AI
-        """
-        response = self.client.messages.create(
-            model=self.api_model_name(),
-            max_tokens=max_tokens,
-            temperature=self.temperature,
-            system=system,
-            messages=[
-                {"role": "user", "content": user},
-            ],
-        )
-        return response.content[0].text
-
-
-class GPT(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case GPT
-    """
-
-    model_names = ["gpt-5", "gpt-5-mini", "gpt-5-nano"]
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client
-        """
-        super().__init__(model_name, temperature)
-        self.client = OpenAI()
-        if "gpt-5" in model_name:
-            self.reasoning_effort = "low"
-
-
-class O1(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case O1
-    """
-
-    model_names = []
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client
-        """
-        super().__init__(model_name, temperature)
-        self.client = OpenAI()
-
-    def _send(self, system: str, user: str, max_tokens: int = 3000) -> str:
-        """
-        Send a message to O1
-        :param system: the context in which this message is to be taken
-        :param user: the prompt
-        :param max_tokens: max number of tokens to generate
-        :return: the response from the AI
-        """
-        message = system + "\n\n" + user
-        response = self.client.chat.completions.create(
-            model=self.api_model_name(),
-            messages=[
-                {"role": "user", "content": message},
-            ],
-        )
-        return response.choices[0].message.content
-
-
-class O3(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case O3
-    """
-
-    model_names = []
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client
-        """
-        super().__init__(model_name, temperature)
-        override = os.getenv("OPENAI_API_KEY_O3")
-        if override:
-            print("Using special key with o3 access")
-            self.client = OpenAI(api_key=override)
-        else:
-            self.client = OpenAI()
-
-    def _send(self, system: str, user: str, max_tokens: int = 3000) -> str:
-        """
-        Send a message to O3
-        :param system: the context in which this message is to be taken
-        :param user: the prompt
-        :param max_tokens: max number of tokens to generate
-        :return: the response from the AI
-        """
-        message = system + "\n\n" + user
-        response = self.client.chat.completions.create(
-            model=self.api_model_name(),
-            messages=[
-                {"role": "user", "content": message},
-            ],
-        )
-        return response.choices[0].message.content
-
-
-class Gemini(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case Gemini
+    Single OpenRouter-backed client covering all configured models.
     """
 
     model_names = [
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-pro",
+        "google/gemini-2.5-flash-lite",
+        "openai/gpt-5-nano",
+        "openai/gpt-oss-120b",
+        "anthropic/claude-haiku-4.5",
+        "x-ai/grok-4-fast",
+        "qwen/qwen3-235b-a22b-2507",
+        "moonshotai/kimi-k2-0905",
+        "deepseek/deepseek-v3.2-exp",
     ]
 
     def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client
-        """
         super().__init__(model_name, temperature)
-        google_api_key = os.getenv("GOOGLE_API_KEY")
-        self.client = OpenAI(
-            api_key=google_api_key,
-            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-        )
-
-
-class Ollama(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case Ollama via the OpenAI client
-    """
-
-    model_names = ["llama3.2 local", "gemma2 local", "qwen2.5 local", "phi4 local"]
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client for Ollama
-        """
-        super().__init__(model_name, temperature)
-        self.client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-
-    def _send(self, system: str, user: str, max_tokens: int = 3000) -> str:
-        """
-        Send a message to Ollama
-        :param system: the context in which this message is to be taken
-        :param user: the prompt
-        :param max_tokens: max number of tokens to generate
-        :return: the response from the AI
-        """
-
-        response = self.client.chat.completions.create(
-            model=self.api_model_name(),
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            response_format={"type": "json_object"},
-        )
-        reply = response.choices[0].message.content
-        if "</think>" in reply:
-            logging.info("Thoughts:\n" + reply.split("</think>")[0].replace("<think>", ""))
-            reply = reply.split("</think>")[1]
-        return reply
-
-
-class DeepSeekAPI(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case DeepSeek via the OpenAI client
-    """
-
-    model_names = ["deepseek-chat V3", "deepseek-reasoner R1"]
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client
-        """
-        super().__init__(model_name, temperature)
-        deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-        self.client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
-
-
-class DeepSeekLocal(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case Ollama via the OpenAI client
-    """
-
-    model_names = []
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the OpenAI client
-        """
-        super().__init__(model_name, temperature)
-        self.client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-
-    def _send(self, system: str, user: str, max_tokens: int = 3000) -> str:
-        """
-        Send a message to Ollama
-        :param system: the context in which this message is to be taken
-        :param user: the prompt
-        :param max_tokens: max number of tokens to generate
-        :return: the response from the AI
-        """
-        system += "\nImportant: avoid overthinking. Think briefly and decisively. The final response must follow the given json format or you forfeit the game. Do not overthink. Respond with json."
-        user += "\nImportant: avoid overthinking. Think briefly and decisively. The final response must follow the given json format or you forfeit the game. Do not overthink. Respond with json."
-        response = self.client.chat.completions.create(
-            model=self.api_model_name(),
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-        )
-        reply = response.choices[0].message.content
-        if "</think>" in reply:
-            logging.info("Thoughts:\n" + reply.split("</think>")[0].replace("<think>", ""))
-            reply = reply.split("</think>")[1]
-        return reply
-
-
-class GroqAPI(LLM):
-    """
-    A class to act as an interface to the remote AI, in this case Groq
-    """
-
-    model_names = [
-        "openai/gpt-oss-120b via Groq",
-    ]
-
-    def __init__(self, model_name: str, temperature: float):
-        """
-        Create a new instance of the Groq client
-        """
-        super().__init__(model_name, temperature)
-        self.client = Groq()
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise LLMException("OPENROUTER_API_KEY is required to use OpenRouter models.")
+        self.client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
