@@ -157,7 +157,7 @@ class OpenRouterLLM(LLM):
         "openai/gpt-5-nano",
         "openai/gpt-oss-120b",
         "anthropic/claude-haiku-4.5",
-        "x-ai/grok-4-fast",
+        "x-ai/grok-4.1-fast",
         "qwen/qwen3-235b-a22b-2507",
         "moonshotai/kimi-k2-0905",
         "deepseek/deepseek-v3.2-exp",
